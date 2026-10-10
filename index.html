@@ -4,228 +4,293 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>پایگاه حقیقت علمی | Web3 Video Platform</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Ethers.js for Web3 interactions -->
+    <!-- Ethers.js -->
     <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
+    <!-- Font Awesome for Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;400;700&display=swap');
-        body { font-family: 'Vazirmatn', sans-serif; background-color: #0a0a0a; scroll-behavior: smooth; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .nft-card:hover { transform: translateY(-10px); border-color: #8b5cf6; transition: all 0.3s ease; }
-        .loading-spinner { border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #8b5cf6; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; }
+        
+        body { 
+            font-family: 'Vazirmatn', sans-serif; 
+            background-color: #0a0a0a;
+            color: #e5e7eb;
+        }
+
+        .glass { 
+            background: rgba(255, 255, 255, 0.03); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+
+        .modal-overlay { transition: opacity 0.3s ease; }
+        .modal-container { transition: transform 0.3s ease; }
+        .hidden-modal { opacity: 0; pointer-events: none; }
+        .hidden-modal .modal-container { transform: scale(0.9); }
+
+        .loading-spinner { 
+            border: 3px solid rgba(255,255,255,0.1); 
+            border-top: 3px solid #8b5cf6; 
+            border-radius: 50%; 
+            width: 18px; 
+            height: 18px; 
+            animation: spin 1s linear infinite; 
+            display: none; 
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
     </style>
 </head>
-<body class="text-gray-100">
-
-    <!-- Referral Banner (Step 2) -->
-    <div id="referral-banner" class="hidden bg-purple-900/30 text-purple-300 text-center py-2 text-xs border-b border-purple-500/30">
-        <i class="fas fa-gift ml-2"></i> شما از طریق لینک معرف وارد شده‌اید! پاداش شما در کیف پول قرار خواهد گرفت.
-    </div>
+<body class="overflow-x-hidden">
 
     <!-- Header -->
     <header class="fixed top-0 w-full z-50 glass">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-reverse space-x-2">
-                <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-purple-500/30">
+                <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
                     <i class="fas fa-atom text-xl text-white"></i>
                 </div>
                 <h1 class="text-xl font-bold tracking-tight">پایگاه حقیقت علمی</h1>
             </div>
             
             <nav class="hidden md:flex space-x-reverse space-x-8 text-sm font-medium text-gray-400">
-                <a href="#" class="hover:text-white transition">ویدیوهای کوتاه</a>
+                <a href="#" class="hover:text-white transition">ویدیوها</a>
                 <a href="#" class="hover:text-white transition">بازار NFT</a>
-                <a href="#" class="hover:text-white transition">آموزش‌ها</a>
             </nav>
 
-            <button id="connect-wallet" class="bg-gradient-to-r from-purple-600 to-blue-600 hover:scale-105 px-5 py-2 rounded-full text-sm font-bold flex items-center transition shadow-lg shadow-purple-500/20">
-                <span id="btn-text">اتصال MetaMask</span>
-                <div id="btn-spinner" class="loading-spinner mr-2"></div>
-                <i id="wallet-icon" class="fas fa-wallet mr-2"></i>
-            </button>
+            <div class="flex items-center space-x-reverse space-x-3">
+                <!-- Upload Button -->
+                <button id="open-upload-modal" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center transition border border-gray-700">
+                    <i class="fas fa-plus ml-2 text-purple-400"></i> آپلود ویدیو
+                </button>
+
+                <!-- Wallet Connect Button -->
+                <button id="connect-wallet" class="bg-gradient-to-r from-purple-600 to-blue-600 hover:scale-105 px-5 py-2 rounded-full text-sm font-bold flex items-center transition shadow-lg shadow-purple-500/20">
+                    <span id="btn-text">اتصال MetaMask</span>
+                    <div id="btn-spinner" class="loading-spinner mr-2"></div>
+                    <i id="wallet-icon" class="fas fa-wallet mr-2"></i>
+                </button>
+            </div>
         </div>
     </header>
 
-    <main class="pt-24 pb-12">
-        <!-- Dual-Mode Switch -->
-        <section class="container mx-auto px-4 mb-12 text-center">
-            <div class="inline-flex p-1 bg-gray-900 rounded-xl border border-gray-800">
-                <button class="px-6 py-2 rounded-lg bg-purple-600 text-white text-sm font-bold shadow-lg transition">
-                    <i class="fas fa-bolt ml-1"></i> فید رایگان
-                </button>
-                <button class="px-6 py-2 rounded-lg text-gray-400 hover:text-white text-sm font-bold transition">
-                    <i class="fas fa-gem ml-1"></i> بازار NFT
-                </button>
-            </div>
-        </section>
+    <!-- Main Content -->
+    <main class="pt-32 container mx-auto px-4 pb-20">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-bold mb-4">محتوای علمی آینده در دنیای Web3</h2>
+            <p class="text-gray-400">ویدیوهای غیرمتمرکز و امن را در اینجا مشاهده کنید.</p>
+        </div>
 
-        <!-- TikTok Style Feed -->
-        <section class="container mx-auto px-4 mb-20">
-            <h2 class="text-2xl font-bold mb-8 border-r-4 border-purple-600 pr-4">ویدیوهای داغ علمی</h2>
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <!-- Card 1 -->
-                <div class="relative aspect-[9/16] bg-gray-800 rounded-2xl overflow-hidden group cursor-pointer">
-                    <img src="https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&q=80&w=400" class="w-full h-full object-cover opacity-70 group-hover:scale-110 transition duration-500" alt="video">
-                    <div class="absolute bottom-0 p-4 w-full bg-gradient-to-t from-black to-transparent">
-                        <p class="text-sm font-bold">رازهای سیاه حفره‌های سیاه</p>
-                        <div class="flex items-center mt-3 text-xs text-gray-300 space-x-reverse space-x-3">
-                            <button onclick="share('https://t.me/share/url?url=science')" class="hover:text-blue-400"><i class="fab fa-telegram"></i></button>
-                            <button onclick="share('https://wa.me/')" class="hover:text-green-400"><i class="fab fa-whatsapp"></i></button>
-                            <span class="mr-auto"><i class="fas fa-heart text-red-500 ml-1"></i> 12k</span>
-                        </div>
-                    </div>
+        <!-- Video Grid (Example Cards) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            
+            <!-- Video Card 1 -->
+            <div class="glass rounded-3xl overflow-hidden group">
+                <div class="relative aspect-video bg-gray-800 flex items-center justify-center overflow-hidden">
+                    <i class="fas fa-play text-4xl text-white/20 group-hover:scale-110 transition duration-300"></i>
+                    <div class="absolute bottom-3 right-3 bg-black/60 px-2 py-1 rounded text-xs">12:45</div>
                 </div>
-                <!-- Card 2 -->
-                <div class="relative aspect-[9/16] bg-gray-800 rounded-2xl overflow-hidden group cursor-pointer">
-                    <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=400" class="w-full h-full object-cover opacity-70 group-hover:scale-110 transition duration-500" alt="video">
-                    <div class="absolute bottom-0 p-4 w-full bg-gradient-to-t from-black to-transparent">
-                        <p class="text-sm font-bold">سفر به مریخ در ۱ دقیقه</p>
-                        <div class="flex items-center mt-3 text-xs text-gray-300 space-x-reverse space-x-3">
-                            <button onclick="share('https://t.me/share/url?url=science')" class="hover:text-blue-400"><i class="fab fa-telegram"></i></button>
-                            <button onclick="share('https://wa.me/')" class="hover:text-green-400"><i class="fab fa-whatsapp"></i></button>
-                            <span class="mr-auto"><i class="fas fa-heart text-red-500 ml-1"></i> 8k</span>
+                <div class="p-5">
+                    <h3 class="text-lg font-bold mb-3">رازهای کیهان و سیاهچاله‌ها</h3>
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-reverse space-x-2">
+                            <div class="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-xs">A</div>
+                            <span class="text-sm text-gray-400">Astrophysics Pro</span>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- NFT Marketplace Section -->
-        <section class="container mx-auto px-4">
-            <h2 class="text-2xl font-bold mb-8 border-r-4 border-blue-500 pr-4">بازار محتوای اختصاصی (NFT)</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                
-                <!-- NFT Card 1 -->
-                <div class="nft-card glass rounded-3xl overflow-hidden">
-                    <div class="relative h-56">
-                        <img src="https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&q=80&w=600" class="w-full h-full object-cover" alt="nebula">
-                        <span class="absolute top-4 right-4 bg-blue-600 text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider">Exclusive</span>
-                    </div>
-                    <div class="p-6">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="text-lg font-bold">مستند: پیدایش کیهان</h3>
-                            <span class="text-[10px] text-gray-500 bg-gray-800 px-2 py-1 rounded" id="nft-id-1">ID: #001</span>
-                        </div>
-                        <p class="text-gray-400 text-sm mb-6">دسترسی دائمی به نسخه 4K و منابع آموزشی.</p>
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <span class="text-xs text-gray-500 block">قیمت مالکیت</span>
-                                <span class="text-xl font-bold text-blue-400">0.05 ETH</span>
-                            </div>
-                            <button onclick="mintNFT(1)" class="bg-white text-black px-6 py-2 rounded-xl text-sm font-bold hover:bg-blue-500 hover:text-white transition">
-                                خرید NFT
+                        <!-- SHARE BUTTONS (New) -->
+                        <div class="flex space-x-reverse space-x-2">
+                            <button onclick="shareLink('whatsapp')" class="text-green-500 hover:text-green-400 transition" title="اشتراک گذاری در واتس‌اپ">
+                                <i class="fab fa-whatsapp text-lg"></i>
+                            </button>
+                            <button onclick="shareLink('telegram')" class="text-blue-400 hover:text-blue-300 transition" title="اشتراک گذاری در تلگرام">
+                                <i class="fab fa-telegram text-lg"></i>
                             </button>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- NFT Card 2 -->
-                <div class="nft-card glass rounded-3xl overflow-hidden">
-                    <div class="relative h-56">
-                        <img src="https://images.unsplash.com/photo-1506318137071-a8e063b4bcc0?auto=format&fit=crop&q=80&w=600" class="w-full h-full object-cover" alt="cosmos">
-                        <span class="absolute top-4 right-4 bg-purple-600 text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider">Rare</span>
-                    </div>
-                    <div class="p-6">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="text-lg font-bold">فیزیک کوانتوم در عمل</h3>
-                            <span class="text-[10px] text-gray-500 bg-gray-800 px-2 py-1 rounded" id="nft-id-2">ID: #042</span>
+            <!-- Video Card 2 -->
+            <div class="glass rounded-3xl overflow-hidden group">
+                <div class="relative aspect-video bg-gray-800 flex items-center justify-center overflow-hidden">
+                    <i class="fas fa-play text-4xl text-white/20 group-hover:scale-110 transition duration-300"></i>
+                    <div class="absolute bottom-3 right-3 bg-black/60 px-2 py-1 rounded text-xs">08:20</div>
+                </div>
+                <div class="p-5">
+                    <h3 class="text-lg font-bold mb-3">مبانی کوانتوم برای مبتدیان</h3>
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center space-x-reverse space-x-2">
+                            <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-xs">Q</div>
+                            <span class="text-sm text-gray-400">Quantum Lab</span>
                         </div>
-                        <p class="text-gray-400 text-sm mb-6">آزمایش‌های عملی در دنیای زیراتمی.</p>
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <span class="text-xs text-gray-500 block">قیمت مالکیت</span>
-                                <span class="text-xl font-bold text-blue-400">0.12 ETH</span>
-                            </div>
-                            <button onclick="mintNFT(2)" class="bg-white text-black px-6 py-2 rounded-xl text-sm font-bold hover:bg-blue-500 hover:text-white transition">
-                                خرید NFT
+                        <!-- SHARE BUTTONS (New) -->
+                        <div class="flex space-x-reverse space-x-2">
+                            <button onclick="shareLink('whatsapp')" class="text-green-500 hover:text-green-400 transition" title="اشتراک گذاری در واتس‌اپ">
+                                <i class="fab fa-whatsapp text-lg"></i>
+                            </button>
+                            <button onclick="shareLink('telegram')" class="text-blue-400 hover:text-blue-300 transition" title="اشتراک گذاری در تلگرام">
+                                <i class="fab fa-telegram text-lg"></i>
                             </button>
                         </div>
                     </div>
                 </div>
-
             </div>
-        </section>
+
+        </div>
     </main>
 
-    <footer class="border-t border-gray-900 mt-20 py-12 bg-black/50">
-        <div class="container mx-auto px-4 text-center">
-            <p class="text-gray-600 text-sm">&copy; ۲۰۲۶ تمامی حقوق برای پایگاه حقیقت علمی محفوظ است. | Web3 Ready</p>
+    <!-- UPLOAD MODAL -->
+    <div id="upload-modal" class="fixed inset-0 z-[60] flex items-center justify-center px-4 hidden-modal">
+        <div id="modal-backdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+        <div class="modal-container glass w-full max-w-md rounded-3xl p-8 relative z-10 shadow-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">آپلود ویدیو جدید</h3>
+                <button id="close-modal" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <form id="upload-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2 mr-1">عنوان ویدیو</label>
+                    <input type="text" id="video-title" required class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-500 transition" placeholder="مثلاً: اسرار سیاهچاله‌ها">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2 mr-1">فایل ویدیو</label>
+                    <label for="video-file" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-700 rounded-2xl cursor-pointer hover:bg-gray-800/50 transition">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i class="fas fa-file-video text-3xl text-gray-500 mb-2"></i>
+                            <p id="file-name-display" class="text-xs text-gray-400">فایل خود را انتخاب کنید</p>
+                        </div>
+                        <input type="file" id="video-file" class="hidden" accept="video/*" required>
+                    </label>
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 py-3 rounded-xl font-bold hover:opacity-90 transition mt-4">شروع آپلود روی IPFS</button>
+            </form>
         </div>
-    </footer>
+    </div>
 
-    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // --- STEP 2: INTERACTIVE FEATURES ---
-
-        // 1. Simulate MetaMask Connection
+        // --- 1. METAMASK LOGIC ---
         const connectBtn = document.getElementById('connect-wallet');
         const btnText = document.getElementById('btn-text');
         const btnSpinner = document.getElementById('btn-spinner');
         const walletIcon = document.getElementById('wallet-icon');
+        const statusMsg = document.getElementById('status-msg');
 
-        connectBtn.addEventListener('click', async () => {
-            btnText.innerText = 'در حال اتصال...';
-            btnSpinner.style.display = 'block';
-            
-            // Simulate network delay
-            setTimeout(() => {
-                btnText.innerText = '0x71C...3E4'; // Fake Address
-                btnSpinner.style.display = 'none';
-                walletIcon.classList.replace('fa-wallet', 'fa-check-circle');
-                walletIcon.classList.add('text-green-400');
-                connectBtn.classList.replace('from-purple-600', 'from-green-600');
-                alert('به کیف پول متامسک متصل شدید!');
-            }, 2000);
+        async function connectWallet() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    btnText.innerText = 'در حال اتصال...';
+                    btnSpinner.style.display = 'block';
+                    const provider = new ethers.providers.Web3Provider(window.ethereum);
+                    await provider.send("eth_requestAccounts", []);
+                    const signer = provider.getSigner();
+                    const address = await signer.getAddress();
+                    const shortAddress = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+                    
+                    btnText.innerText = shortAddress;
+                    btnSpinner.style.display = 'none';
+                    connectBtn.classList.replace('from-purple-600', 'from-green-600');
+                    connectBtn.classList.replace('to-blue-600', 'to-emerald-600');
+                    walletIcon.classList.replace('fa-wallet', 'fa-check-circle');
+                    walletIcon.classList.add('text-green-400');
+                    statusMsg.innerText = "وضعیت: متصل به " + address;
+                    statusMsg.classList.replace('text-yellow-500', 'text-green-400');
+                } catch (error) {
+                    alert("خطا در اتصال!");
+                    resetButton();
+                }
+            } else {
+                alert("لطفاً متامسک را نصب کنید!");
+            }
+        }
+
+        function resetButton() {
+            btnText.innerText = 'اتصال MetaMask';
+            btnSpinner.style.display = 'none';
+            connectBtn.classList.remove('from-green-600', 'to-emerald-600');
+            connectBtn.classList.add('from-purple-600', 'to-blue-600');
+        }
+        connectBtn.addEventListener('click', connectWallet);
+
+        // --- 2. MODAL & UPLOAD LOGIC (With IPFS Structure) ---
+        const modal = document.getElementById('upload-modal');
+        const openModalBtn = document.getElementById('open-upload-modal');
+        const closeModalBtn = document.getElementById('close-modal');
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const videoFileInput = document.getElementById('video-file');
+        const fileNameDisplay = document.getElementById('file-name-display');
+        const uploadForm = document.getElementById('upload-form');
+
+        const closeModal = () => {
+            modal.classList.add('hidden-modal');
+            uploadForm.reset();
+            fileNameDisplay.innerText = "فایل خود را انتخاب کنید";
+        };
+
+        openModalBtn.addEventListener('click', () => modal.classList.remove('hidden-modal'));
+        closeModalBtn.addEventListener('click', closeModal);
+        modalBackdrop.addEventListener('click', closeModal);
+
+        videoFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                fileNameDisplay.innerText = e.target.files[0].name;
+                fileNameDisplay.classList.replace('text-gray-400', 'text-purple-400');
+            }
         });
 
-        // 2. Referral System (Check URL params)
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('ref')) {
-            document.getElementById('referral-banner').classList.remove('hidden');
-        }
-
-        // 3. Share Functionality
-        function share(platform) {
-            const url = window.location.href;
-            alert('لینک برای اشتراک‌گذاری در ' + platform + ' کپی شد!');
-            // In a real app: navigator.clipboard.writeText(url);
-        }
-
-
-        // --- STEP 3: WEB3 / NFT LOGIC (Ready for Integration) ---
-
-        // IMPORTANT: Replace these with your actual Thirdweb/Moralis contract info
-        const CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000"; 
-        const ABI = [
-            "function mint(address recipient, string memory uri) public",
-            "function ownerOf(uint256 tokenId) public view returns (address)"
-        ];
-
-        async function mintNFT(tokenId) {
-            // Check if wallet is connected
-            if (btnText.innerText.includes('0x')) {
-                alert(`در حال شروع فرآیند Mint کردن NFT شماره ${tokenId}... لطفا در متامسک تایید کنید.`);
-                
-                // Placeholder for actual Web3 Call:
-                /*
-                try {
-                    const provider = new ethers.providers.Web3Provider(window.ethereum);
-                    const signer = provider.getSigner();
-                    const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-                    const tx = await contract.mint(await signer.getAddress(), "ipfs://metadata_url");
-                    await tx.wait();
-                    alert("با موفقیت خرید انجام شد!");
-                } catch (err) {
-                    console.error(err);
-                    alert("خطا در تراکنش!");
-                }
-                */
-                console.log("Web3 Call Triggered for ID:", tokenId);
-            } else {
-                alert("لطفاً ابتدا به متامسک خود متصل شوید!");
+        // IPFS Service Mock
+        const IPFS_SERVICE = {
+            async uploadVideoToIPFS(file, title) {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        const fakeHash = "Qm" + Math.random().toString(36).substring(2, 15);
+                        resolve(fakeHash);
+                    }, 3000);
+                });
             }
+        };
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('video-title').value;
+            const file = videoFileInput.files[0];
+            const submitBtn = uploadForm.querySelector('button[type="submit"]');
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'در حال آپلود روی IPFS...';
+
+            try {
+                const ipfsHash = await IPFS_SERVICE.uploadVideoToIPFS(file, title);
+                alert(`موفقیت‌آمیز! \nعنوان: ${title}\nHash: ${ipfsHash}`);
+                closeModal();
+            } catch (err) {
+                alert("خطا در آپلود!");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'شروع آپلود روی IPFS';
+            }
+        });
+
+        // --- 3. SHARE LOGIC (New) ---
+        function shareLink(platform) {
+            const currentUrl = window.location.href;
+            const text = "بیا این ویدیو علمی رو ببین: ";
+            let shareUrl = "";
+
+            if (platform === 'whatsapp') {
+                shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text + currentUrl)}`;
+            } else if (platform === 'telegram') {
+                shareUrl = `https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(text)}`;
+            }
+
+            // Open share URL in a new window/tab
+            window.open(shareUrl, '_blank');
         }
     </script>
 </body>
