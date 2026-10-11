@@ -3,356 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پایگاه حقیقت علمی | Web3 Platform</title>
-    <!-- Tailwind CSS -->
+    <title>پایگاه حقیقت علمی | Web3 DApp</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Ethers.js -->
-    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;400;700&display=swap');
-        
-        body { 
-            font-family: 'Vazirmatn', sans-serif; 
-            background-color: #0a0a0a;
-            color: #e5e7eb;
-        }
-
-        .glass { 
-            background: rgba(255, 255, 255, 0.03); 
-            backdrop-filter: blur(12px); 
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-        }
-
-        /* Modal & Transitions */
-        .modal-overlay { transition: opacity 0.3s ease; }
-        .modal-container { transition: transform 0.3s ease; }
-        .hidden-modal { opacity: 0; pointer-events: none; }
-        .hidden-modal .modal-container { transform: scale(0.9); }
-
-        /* Page Transitions */
-        .page-section { display: none; animation: fadeIn 0.4s ease-out; }
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700&display=swap');
+        body { font-family: 'Vazirmatn', sans-serif; background: #050505; color: #fff; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .locked-video { filter: blur(15px); pointer-events: none; transition: filter 0.5s ease; }
+        .unlocked-video { filter: blur(0px); pointer-events: auto; }
+        .page-section { display: none; }
         .page-section.active { display: block; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .loading-spinner { 
-            border: 3px solid rgba(255,255,255,0.1); 
-            border-top: 3px solid #8b5cf6; 
-            border-radius: 50%; 
-            width: 18px; 
-            height: 18px; 
-            animation: spin 1s linear infinite; 
-            display: none; 
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* NFT Card Hover */
-        .nft-card:hover { transform: translateY(-10px); border-color: #8b5cf6; }
-        .nft-card { transition: all 0.3s ease; }
-
-        video { border-radius: 1.5rem 1.5rem 0 0; width: 100%; height: 100%; object-fit: cover; }
-
-        .nav-link { position: relative; transition: color 0.3s; }
-        .nav-link.active { color: #fff; }
-        .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(to left, #8b5cf6, #3b82f6);
-        }
     </style>
 </head>
-<body class="overflow-x-hidden">
+<body>
 
     <!-- Header -->
-    <header class="fixed top-0 w-full z-50 glass">
-        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-reverse space-x-2">
-                <div class="w-10 h-10 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-atom text-xl text-white"></i>
-                </div>
-                <h1 class="text-xl font-bold tracking-tight">پایگاه حقیقت علمی</h1>
-            </div>
-            
-            <nav class="hidden md:flex space-x-reverse space-x-8 text-sm font-medium text-gray-400">
-                <a href="javascript:void(0)" onclick="showPage('videos')" id="nav-videos" class="nav-link active">ویدیوها</a>
-                <a href="javascript:void(0)" onclick="showPage('nft-market')" id="nav-nft-market" class="nav-link">بازار NFT</a>
-            </nav>
-
-            <div class="flex items-center space-x-reverse space-x-3">
-                <button id="open-upload-modal" class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center transition border border-gray-700">
-                    <i class="fas fa-plus ml-2 text-purple-400"></i> آپلود
-                </button>
-
-                <button id="connect-wallet" class="bg-gradient-to-r from-purple-600 to-blue-600 hover:scale-105 px-5 py-2 rounded-full text-sm font-bold flex items-center transition shadow-lg shadow-purple-500/20">
-                    <span id="btn-text">اتصال MetaMask</span>
-                    <div id="btn-spinner" class="loading-spinner mr-2"></div>
-                    <i id="wallet-icon" class="fas fa-wallet mr-2"></i>
-                </button>
-            </div>
-        </div>
+    <header class="p-6 flex justify-between items-center glass">
+        <h1 class="text-xl font-bold">پایگاه حقیقت علمی</h1>
+        <button id="connectBtn" class="bg-purple-600 px-6 py-2 rounded-full font-bold hover:bg-purple-500 transition">
+            اتصال به کیف پول
+        </button>
     </header>
 
-    <!-- MAIN CONTENT AREA -->
-    <main class="pt-32 container mx-auto px-4 pb-20">
+    <main class="container mx-auto p-6">
+        <div id="userChannel" class="mb-8 hidden">
+            <h2 class="text-2xl font-bold">کانال شخصی: <span id="userAddress" class="text-purple-400"></span></h2>
+        </div>
 
-        <!-- SECTION 1: VIDEOS -->
-        <section id="page-videos" class="page-section active">
-            <div class="text-center mb-12">
-                <h2 class="text-4xl font-bold mb-4">ویدیوهای علمی</h2>
-                <p class="text-gray-400">محتوای آموزشی منتشر شده توسط جامعه علمی</p>
-            </div>
-            <div id="video-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Video Card 1 -->
-                <div class="glass rounded-3xl overflow-hidden group">
-                    <div class="relative aspect-video bg-gray-800">
-                        <video src="https://cdn.pixabay.com/video/2020/09/11/49531-458514705_large.mp4" controls></video>
-                    </div>
-                    <div class="p-5">
-                        <h3 class="text-lg font-bold mb-3">رازهای سیاهچاله‌ها و کیهان</h3>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center space-x-reverse space-x-2">
-                                <div class="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-xs">A</div>
-                                <span class="text-sm text-gray-400">Astrophysics Pro</span>
-                            </div>
-                            <div class="flex space-x-reverse space-x-2">
-                                <button onclick="shareLink('whatsapp')" class="text-green-500 hover:text-green-400"><i class="fab fa-whatsapp"></i></button>
-                                <button onclick="shareLink('telegram')" class="text-blue-400 hover:text-blue-300"><i class="fab fa-telegram"></i></button>
-                            </div>
-                        </div>
+        <div class="flex gap-4 mb-8">
+            <button onclick="switchTab('videos')" class="px-4 py-2 border-b-2 border-purple-500">ویدیوها</button>
+            <button onclick="switchTab('upload')" class="px-4 py-2 opacity-60">آپلود</button>
+        </div>
+
+        <!-- Section: Videos -->
+        <section id="videosSection" class="page-section active grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Initial Locked Video Example -->
+            <div class="glass rounded-2xl p-4 overflow-hidden">
+                <div class="relative">
+                    <video id="vid1" class="w-full rounded-lg locked-video" src="https://www.w3schools.com/html/mov_bbb.mp4"></video>
+                    <div id="lock1" class="absolute inset-0 flex items-center justify-center bg-black/50">
+                        <button onclick="unlockVideo('vid1', 'lock1', '0.01')" class="bg-white text-black px-4 py-2 rounded-lg font-bold">خرید دسترسی (0.01 ETH)</button>
                     </div>
                 </div>
-                <!-- Video Card 2 -->
-                <div class="glass rounded-3xl overflow-hidden group">
-                    <div class="relative aspect-video bg-gray-800">
-                        <video src="https://cdn.pixabay.com/video/2021/09/06/87737-600718307_large.mp4" controls></video>
-                    </div>
-                    <div class="p-5">
-                        <h3 class="text-lg font-bold mb-3">زیست‌شناسی و طبیعت</h3>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center space-x-reverse space-x-2">
-                                <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-xs">N</div>
-                                <span class="text-sm text-gray-400">Nature Explorer</span>
-                            </div>
-                            <div class="flex space-x-reverse space-x-2">
-                                <button onclick="shareLink('whatsapp')" class="text-green-500 hover:text-green-400"><i class="fab fa-whatsapp"></i></button>
-                                <button onclick="shareLink('telegram')" class="text-blue-400 hover:text-blue-300"><i class="fab fa-telegram"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <h3 class="mt-4 font-bold">آموزش سیاهچاله‌ها</h3>
             </div>
         </section>
 
-        <!-- SECTION 2: NFT MARKET -->
-        <section id="page-nft-market" class="page-section">
-            <div class="text-center mb-12">
-                <h2 class="text-4xl font-bold mb-4">بازار NFT علمی</h2>
-                <p class="text-gray-400">خرید قطعات هنری و علمی منحصر به فرد</p>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- NFT Card 1 -->
-                <div class="nft-card glass rounded-3xl overflow-hidden border border-white/5">
-                    <img src="https://images.pexels.com/photos/356079/pexels-photo-356079.jpeg?auto=compress&cs=tinysrgb&w=400" alt="NFT" class="w-full h-48 object-cover">
-                    <div class="p-4">
-                        <h3 class="font-bold text-lg">Nebula #001</h3>
-                        <div class="flex justify-between items-center mt-3">
-                            <span class="text-purple-400 font-bold">0.05 ETH</span>
-                            <button class="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg text-xs transition">خرید</button>
-                        </div>
-                    </div>
-                </div>
-                <!-- NFT Card 2 -->
-                <div class="nft-card glass rounded-3xl overflow-hidden border border-white/5">
-                    <img src="https://images.pexels.com/photos/164455/pexels-photo-164455.jpeg?auto=compress&cs=tinysrgb&w=400" alt="NFT" class="w-full h-48 object-cover">
-                    <div class="p-4">
-                        <h3 class="font-bold text-lg">Deep Sea #42</h3>
-                        <div class="flex justify-between items-center mt-3">
-                            <span class="text-purple-400 font-bold">0.12 ETH</span>
-                            <button class="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg text-xs transition">خرید</button>
-                        </div>
-                    </div>
-                </div>
-                <!-- NFT Card 3 -->
-                <div class="nft-card glass rounded-3xl overflow-hidden border border-white/5">
-                    <img src="https://images.pexels.com/photos/288853/pexels-photo-288853.jpeg?auto=compress&cs=tinysrgb&w=400" alt="NFT" class="w-full h-48 object-cover">
-                    <div class="p-4">
-                        <h3 class="font-bold text-lg">Atom Structure</h3>
-                        <div class="flex justify-between items-center mt-3">
-                            <span class="text-purple-400 font-bold">0.08 ETH</span>
-                            <button class="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg text-xs transition">خرید</button>
-                        </div>
-                    </div>
-                </div>
-                <!-- NFT Card 4 -->
-                <div class="nft-card glass rounded-3xl overflow-hidden border border-white/5">
-                    <img src="https://images.pexels.com/photos/110854/pexels-photo-110854.jpeg?auto=compress&cs=tinysrgb&w=400" alt="NFT" class="w-full h-48 object-cover">
-                    <div class="p-4">
-                        <h3 class="font-bold text-lg">Galaxy Edge</h3>
-                        <div class="flex justify-between items-center mt-3">
-                            <span class="text-purple-400 font-bold">0.25 ETH</span>
-                            <button class="bg-white/10 hover:bg-white/20 px-3 py-1 rounded-lg text-xs transition">خرید</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Section: Upload -->
+        <section id="uploadSection" class="page-section glass p-8 rounded-2xl">
+            <h2 class="text-xl mb-4">آپلود ویدیوی جدید</h2>
+            <input type="text" id="vTitle" placeholder="عنوان ویدیو" class="w-full bg-black border border-gray-700 p-3 rounded-lg mb-4">
+            <input type="file" id="vFile" class="mb-4 block">
+            <button onclick="handleUpload()" class="bg-blue-600 px-6 py-2 rounded-lg font-bold">آپلود و ایجاد کارت</button>
         </section>
     </main>
 
-    <!-- UPLOAD MODAL -->
-    <div id="upload-modal" class="fixed inset-0 z-[60] flex items-center justify-center px-4 hidden-modal">
-        <div id="modal-backdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-        <div class="modal-container glass w-full max-w-md rounded-3xl p-8 relative z-10 shadow-2xl">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold">آپلود ویدیو جدید</h3>
-                <button id="close-modal" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-            </div>
-            <form id="upload-form" class="space-y-5">
-                <div>
-                    <label class="block text-sm text-gray-400 mb-2 mr-1">عنوان ویدیو</label>
-                    <input type="text" id="video-title" required class="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-500 transition" placeholder="مثلاً: اسرار سیاهچاله‌ها">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-400 mb-2 mr-1">فایل ویدیو</label>
-                    <label for="video-file" class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-700 rounded-2xl cursor-pointer hover:bg-gray-800/50 transition">
-                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                            <i class="fas fa-file-video text-3xl text-gray-500 mb-2"></i>
-                            <p id="file-name-display" class="text-xs text-gray-400">فایل خود را انتخاب کنید</p>
-                        </div>
-                        <input type="file" id="video-file" class="hidden" accept="video/*" required>
-                    </label>
-                </div>
-                <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-blue-600 py-3 rounded-xl font-bold hover:opacity-90 transition mt-4">شروع آپلود روی IPFS</button>
-            </form>
-        </div>
-    </div>
-
     <script>
-        // --- 1. PAGE NAVIGATION LOGIC ---
-        function showPage(pageId) {
-            // Hide all sections
-            document.querySelectorAll('.page-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            // Remove active state from all nav links
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('active');
-            });
+        // 1. Wallet Logic
+        const connectBtn = document.getElementById('connectBtn');
+        const userAddressSpan = document.getElementById('userAddress');
+        const userChannel = document.getElementById('userChannel');
 
-            // Show target section
-            document.getElementById('page-' + pageId).classList.add('active');
-            // Highlight active nav link
-            document.getElementById('nav-' + pageId).classList.add('active');
-
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        // --- 2. METAMASK LOGIC (WITH MOBILE DEEP LINK) ---
-        const connectBtn = document.getElementById('connect-wallet');
-        const btnText = document.getElementById('btn-text');
-        const btnSpinner = document.getElementById('btn-spinner');
-        const walletIcon = document.getElementById('wallet-icon');
-        const METAMASK_DEEP_LINK = "https://metamask.app.link/dapp/habibz-hash.github.io/NFT1/";
-
-        async function connectWallet() {
-            if (typeof window.ethereum !== 'undefined') {
+        connectBtn.addEventListener('click', async () => {
+            if (window.ethereum) {
                 try {
-                    btnText.innerText = 'در حال اتصال...';
-                    btnSpinner.style.display = 'block';
-                    const provider = new ethers.providers.Web3Provider(window.ethereum);
-                    await provider.send("eth_requestAccounts", []);
-                    const signer = provider.getSigner();
-                    const address = await signer.getAddress();
-                    const shortAddress = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-                    btnText.innerText = shortAddress;
-                    btnSpinner.style.display = 'none';
-                    connectBtn.classList.replace('from-purple-600', 'from-green-600');
-                    connectBtn.classList.replace('to-blue-600', 'to-emerald-600');
-                    walletIcon.classList.replace('fa-wallet', 'fa-check-circle');
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    const account = accounts[0];
+                    connectBtn.innerText = account.substring(0, 6) + '...' + account.substring(38);
+                    userAddressSpan.innerText = account;
+                    userChannel.classList.remove('hidden');
+                    // Update URL for dynamic routing
+                    const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?user=' + account;
+                    window.history.pushState({ path: newUrl }, '', newUrl);
                 } catch (error) {
-                    console.error(error);
-                    alert("خطا در اتصال!");
-                    resetButton();
+                    alert("خطا در اتصال: " + error.message);
                 }
             } else {
-                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-                if (isMobile) {
-                    alert("در حال باز کردن متامسک...");
-                    window.location.href = METAMASK_DEEP_LINK;
-                } else {
-                    alert("لطفاً متامسک را نصب کنید.");
-                }
-            }
-        }
-
-        function resetButton() {
-            btnText.innerText = 'اتصال MetaMask';
-            btnSpinner.style.display = 'none';
-            connectBtn.classList.remove('from-green-600', 'to-emerald-600');
-            connectBtn.classList.add('from-purple-600', 'to-blue-600');
-        }
-        connectBtn.addEventListener('click', connectWallet);
-
-        // --- 3. UPLOAD & VIDEO LOGIC ---
-        const modal = document.getElementById('upload-modal');
-        const openModalBtn = document.getElementById('open-upload-modal');
-        const closeModalBtn = document.getElementById('close-modal');
-        const modalBackdrop = document.getElementById('modal-backdrop');
-        const videoFileInput = document.getElementById('video-file');
-        const fileNameDisplay = document.getElementById('file-name-display');
-        const uploadForm = document.getElementById('upload-form');
-        const videoGrid = document.getElementById('video-grid');
-
-        const closeModal = () => {
-            modal.classList.add('hidden-modal');
-            uploadForm.reset();
-            fileNameDisplay.innerText = "فایل خود را انتخاب کنید";
-            fileNameDisplay.classList.replace('text-purple-400', 'text-gray-400');
-        };
-
-        openModalBtn.addEventListener('click', () => modal.classList.remove('hidden-modal'));
-        closeModalBtn.addEventListener('click', closeModal);
-        modalBackdrop.addEventListener('click', closeModal);
-
-        videoFileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                fileNameDisplay.innerText = e.target.files[0].name;
-                fileNameDisplay.classList.replace('text-gray-400', 'text-purple-400');
+                alert("لطفاً متامسک را نصب کنید.");
             }
         });
 
-        const IPFS_SERVICE = {
-            async uploadVideoToIPFS(file, title) {
-                return new Promise((resolve) => {
-                    setTimeout(() => {
-                        const fakeHash = "Qm" + Math.random().toString(36).substring(2, 15);
-                        resolve(fakeHash);
-                    }, 3000);
-                });
-            }
-        };
+        // 2. Tab Switching
+        function switchTab(tab) {
+            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(tab + 'Section').classList.add('active');
+        }
 
-        uploadForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const title = document.getElementById('video-title').value;
-            const file = videoFileInput.files[0];
-            const submitBtn = uploadForm.querySelector('button[type="submit"]');
-
-            submitBtn.disabled = true;
-            submitBtn.innerText = 'در حال آپلود...';
-
+        // 3. Paywall Logic
+        async function unlockVideo(vidId, lockId, price) {
+            if(!window.ethereum) return alert("کیف پول متصل نیست!");
+            
+            // Simulating Transaction
             try {
-                const ipfsHash = await IPFS_SERVICE.uploadVideoToIPFS(file, title);
-                const videoObjectURL = URL.createObjectURL(file);
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                const signer = provider.getSigner();
                 
-                // Insert new card at the top
-                const card = document.
+                // Actual transaction request logic (standard ethers.js)
+                const tx = await signer.sendTransaction({
+                    to: "0x0000000000000000000000000000000000000000", // Dummy address for simulation
+                    value: ethers.utils.parseEther(price)
+                });
+                
+                alert("تراکنش در حال پردازش...");
+                await tx.wait();
+                
+                // Unlock UI
+                document.getElementById(vidId).classList.remove('locked-video');
+                document.getElementById(vidId).classList.add('unlocked-video');
+                document.getElementById(lockId).classList.add('hidden');
+            } catch (e) {
+                alert("تراکنش لغو شد یا ناموفق بود.");
+            }
+        }
+
+        // 4. Upload & Rendering Logic
+        function handleUpload() {
+            const file = document.getElementById('vFile').files[0];
+            const title = document.getElementById('vTitle').value;
+            if (!file) return alert("فایل انتخاب کنید");
+
+            const videoUrl = URL.createObjectURL(file);
+            const grid = document.getElementById('videosSection');
+            
+            const newCard = document.createElement('div');
+            newCard.className = 'glass rounded-2xl p-4 overflow-hidden';
+            newCard.innerHTML = `
+                <div class="relative">
+                    <video class="w-full rounded-lg" controls src="${videoUrl}"></video>
+                </div>
+                <h3 class="mt-4 font-bold">${title}</h3>
+                <span class="text-green-500 text-sm">آپلود شده (بدون قفل)</span>
+            `;
+            grid.appendChild(newCard);
+            switchTab('videos');
+        }
+
+        // Check for user parameter on load
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const user = urlParams.get('user');
+            if (user) {
+                userAddressSpan.innerText = user;
+                userChannel.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
